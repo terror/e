@@ -1,1 +1,1 @@
-**e** let's you edit files quickly.
+**e** is a tool let's you find and edit recently used files quickly.

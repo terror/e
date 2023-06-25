@@ -2,6 +2,7 @@ package main
 
 import (
   "encoding/json"
+  "errors"
   "fmt"
   "github.com/spf13/cobra"
   "io/ioutil"
@@ -40,8 +41,12 @@ func NewIndex(path string) Index {
   return Index{path: path}
 }
 
-func (i *Index) Update(entry Entry) {
-  entries := i.read()
+func (i *Index) Update(entry Entry) error {
+  entries, err := i.read()
+
+  if err != nil {
+    return nil
+  }
 
   found := false
 
@@ -58,10 +63,16 @@ func (i *Index) Update(entry Entry) {
   }
 
   i.write(entries)
+
+  return nil
 }
 
-func (i *Index) Search(name string) []Entry {
-  entries := i.read()
+func (i *Index) Search(name string) ([]Entry, error) {
+  entries, err := i.read()
+
+  if err != nil {
+    return nil, err
+  }
 
   var matches []Entry
 
@@ -71,49 +82,49 @@ func (i *Index) Search(name string) []Entry {
     }
   }
 
-  return matches
+  return matches, nil
 }
 
-func (i *Index) read() []Entry {
+func (i *Index) read() ([]Entry, error) {
   data, err := ioutil.ReadFile(i.path)
 
   if os.IsNotExist(err) {
-    return []Entry{}
-  } else if err != nil {
-    log.Fatal(err)
+    return []Entry{}, nil
+  }
+
+  if err != nil {
+    return nil, err
   }
 
   var entries []Entry
 
-  err = json.Unmarshal(data, &entries)
-
-  if err != nil {
-    log.Fatal(err)
+  if err := json.Unmarshal(data, &entries); err != nil {
+    return nil, err
   }
 
-  return entries
+  return entries, nil
 }
 
-func (i *Index) write(entries []Entry) {
+func (i *Index) write(entries []Entry) error {
   data, err := json.Marshal(entries)
 
   if err != nil {
-    log.Fatal(err)
+    return err
   }
 
   file, err := os.Create(i.path)
 
   if err != nil {
-    log.Fatal(err)
+    return err
   }
 
   defer file.Close()
 
-  _, err = file.Write(data)
-
-  if err != nil {
-    log.Fatal(err)
+  if _, err := file.Write(data); err != nil {
+    return err
   }
+
+  return nil
 }
 
 func fuzzySearch(query string, matches []Entry) Entry {
@@ -203,30 +214,41 @@ func run(cmd *cobra.Command, args []string) {
   index := NewIndex(expand("~/.e.db"))
 
   if len(args) == 0 {
-    fmt.Println("error: No file specified")
-    os.Exit(1)
+    die(errors.New("No filename specified"))
   }
 
   fp, err := filepath.Abs(args[0])
 
   if err != nil {
-    log.Fatal(err)
+    die(err)
   }
 
-  index.Update(NewEntry(fp))
+  if err := index.Update(NewEntry(fp)); err != nil {
+    die(err)
+  }
 
-  matches := index.Search(filepath.Base(fp))
+  matches, err := index.Search(filepath.Base(fp))
 
-  if len(matches) > 1 {
-    openInEditor(editor, fuzzySearch(fp, matches).Path)
-  } else {
+  if err != nil {
+    die(err)
+  }
+
+  if len(matches) == 0 {
+    openInEditor(editor, fp)
+  } else if len(matches) == 1 {
     openInEditor(editor, matches[0].Path)
+  } else {
+    openInEditor(editor, fuzzySearch(fp, matches).Path)
   }
+}
+
+func die(err error) {
+  fmt.Println(fmt.Sprintf("error: %s", err))
+  os.Exit(1)
 }
 
 func main() {
   if err := root.Execute(); err != nil {
-    fmt.Println(fmt.Sprintf("error: %s", err))
-    os.Exit(1)
+    die(err)
   }
 }
