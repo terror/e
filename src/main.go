@@ -46,7 +46,7 @@ func (i *Index) Update(entry Entry) error {
   entries, err := i.read()
 
   if err != nil {
-    return nil
+    return err
   }
 
   found := false
