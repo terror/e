@@ -11,6 +11,7 @@ import (
   "os/exec"
   "os/user"
   "path/filepath"
+  "sort"
   "strings"
   "sync"
   "time"
@@ -157,7 +158,7 @@ func fuzzySearch(matches []Entry) (Entry, error) {
   )
 
   if err != nil {
-    return Entry{}, fmt.Errorf("fuzzyfinder.Find: %s", err)
+    return Entry{}, err
   }
 
   return matches[index], nil
@@ -262,9 +263,15 @@ func run(cmd *cobra.Command, args []string) {
     return
   }
 
-  for index, match := range matches {
-    fmt.Printf("%d. %s", index+1, match.Path)
-  }
+  sort.Slice(matches, func(i, j int) bool {
+    return calculateFrecency(
+      matches[i],
+      time.Now(),
+    ) < calculateFrecency(
+      matches[j],
+      time.Now(),
+    )
+  })
 
   selected, err := fuzzySearch(matches)
 
