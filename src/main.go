@@ -13,6 +13,7 @@ import (
   "os/user"
   "path/filepath"
   "strings"
+  "sync"
   "time"
 )
 
@@ -75,13 +76,25 @@ func (i *Index) Search(name string) ([]Entry, error) {
     return nil, err
   }
 
-  var matches []Entry
+  var wg sync.WaitGroup
+
+  matches := make([]Entry, 0, len(entries))
+
+  matchesMutex := &sync.Mutex{}
 
   for _, entry := range entries {
-    if filepath.Base(entry.Path) == name && isFile(entry.Path) {
-      matches = append(matches, entry)
-    }
+    wg.Add(1)
+    go func(e Entry) {
+      defer wg.Done()
+      if filepath.Base(e.Path) == name && isFile(e.Path) {
+        matchesMutex.Lock()
+        matches = append(matches, e)
+        matchesMutex.Unlock()
+      }
+    }(entry)
   }
+
+  wg.Wait()
 
   return matches, nil
 }
