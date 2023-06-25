@@ -78,7 +78,7 @@ func (i *Index) Search(name string) ([]Entry, error) {
   var matches []Entry
 
   for _, entry := range entries {
-    if filepath.Base(entry.Path) == name {
+    if filepath.Base(entry.Path) == name && isFile(entry.Path) {
       matches = append(matches, entry)
     }
   }
