@@ -6,7 +6,6 @@ import (
   "fmt"
   "github.com/ktr0731/go-fuzzyfinder"
   "github.com/spf13/cobra"
-  "io/ioutil"
   "log"
   "os"
   "os/exec"
@@ -64,7 +63,9 @@ func (i *Index) Update(entry Entry) error {
     entries = append(entries, entry)
   }
 
-  i.write(entries)
+  if err := i.write(entries); err != nil {
+    return err
+  }
 
   return nil
 }
@@ -100,7 +101,7 @@ func (i *Index) Search(name string) ([]Entry, error) {
 }
 
 func (i *Index) read() ([]Entry, error) {
-  data, err := ioutil.ReadFile(i.path)
+  data, err := os.ReadFile(i.path)
 
   if os.IsNotExist(err) {
     return []Entry{}, nil
@@ -262,7 +263,7 @@ func run(cmd *cobra.Command, args []string) {
   }
 
   for index, match := range matches {
-    fmt.Println(fmt.Sprintf("%d. %s", index+1, match.Path))
+    fmt.Printf("%d. %s", index+1, match.Path)
   }
 
   selected, err := fuzzySearch(matches)
@@ -275,7 +276,7 @@ func run(cmd *cobra.Command, args []string) {
 }
 
 func die(err error) {
-  fmt.Println(fmt.Sprintf("error: %s", err))
+  fmt.Printf("error: %s", err)
   os.Exit(1)
 }
 
