@@ -4,6 +4,7 @@ import (
   "encoding/json"
   "errors"
   "fmt"
+  "github.com/ktr0731/go-fuzzyfinder"
   "github.com/spf13/cobra"
   "io/ioutil"
   "log"
@@ -127,22 +128,25 @@ func (i *Index) write(entries []Entry) error {
   return nil
 }
 
-func fuzzySearch(query string, matches []Entry) Entry {
-  var bestMatch Entry
+func fuzzySearch(matches []Entry) (Entry, error) {
+  var paths []string
 
-  bestScore := float64(-1)
-
-  now := time.Now()
-
-  for _, entry := range matches {
-    frecency := calculateFrecency(entry, now)
-    if frecency > bestScore {
-      bestMatch = entry
-      bestScore = frecency
-    }
+  for _, match := range matches {
+    paths = append(paths, match.Path)
   }
 
-  return bestMatch
+  index, err := fuzzyfinder.Find(
+    paths,
+    func(i int) string {
+      return paths[i]
+    },
+  )
+
+  if err != nil {
+    return Entry{}, fmt.Errorf("fuzzyfinder.Find: %s", err)
+  }
+
+  return matches[index], nil
 }
 
 func calculateFrecency(entry Entry, now time.Time) float64 {
@@ -169,6 +173,7 @@ var root = &cobra.Command{
 
 func expand(path string) string {
   usr, _ := user.Current()
+
   dir := usr.HomeDir
 
   if path == "~" {
@@ -235,11 +240,25 @@ func run(cmd *cobra.Command, args []string) {
 
   if len(matches) == 0 {
     openInEditor(editor, fp)
-  } else if len(matches) == 1 {
-    openInEditor(editor, matches[0].Path)
-  } else {
-    openInEditor(editor, fuzzySearch(fp, matches).Path)
+    return
   }
+
+  if len(matches) == 1 {
+    openInEditor(editor, matches[0].Path)
+    return
+  }
+
+  for index, match := range matches {
+    fmt.Println(fmt.Sprintf("%d. %s", index+1, match.Path))
+  }
+
+  selected, err := fuzzySearch(matches)
+
+  if err != nil {
+    die(err)
+  }
+
+  openInEditor(editor, selected.Path)
 }
 
 func die(err error) {
