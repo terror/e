@@ -35,6 +35,22 @@ func (e *Entry) Merge(other Entry) Entry {
   }
 }
 
+func (e *Entry) Frecency(now time.Time) float64 {
+  duration := now.Sub(e.LastAccess)
+
+  score := e.Score
+
+  if duration < time.Hour {
+    return score * 4
+  } else if duration < 24*time.Hour {
+    return score * 2
+  } else if duration < 7*24*time.Hour {
+    return score / 2
+  }
+
+  return score / 4
+}
+
 type Index struct {
   path string
 }
@@ -164,22 +180,6 @@ func fuzzySearch(matches []Entry) (Entry, error) {
   return matches[index], nil
 }
 
-func calculateFrecency(entry Entry, now time.Time) float64 {
-  duration := now.Sub(entry.LastAccess)
-
-  score := entry.Score
-
-  if duration < time.Hour {
-    return score * 4
-  } else if duration < 24*time.Hour {
-    return score * 2
-  } else if duration < 7*24*time.Hour {
-    return score / 2
-  }
-
-  return score / 4
-}
-
 var root = &cobra.Command{
   Use:   "e",
   Short: "Edit files quickly",
@@ -247,6 +247,11 @@ func run(cmd *cobra.Command, args []string) {
     die(err)
   }
 
+  if isFile(fp) {
+    openInEditor(editor, fp)
+    return
+  }
+
   matches, err := index.Search(filepath.Base(fp))
 
   if err != nil {
@@ -264,14 +269,20 @@ func run(cmd *cobra.Command, args []string) {
   }
 
   sort.Slice(matches, func(i, j int) bool {
-    return calculateFrecency(
-      matches[i],
-      time.Now(),
-    ) < calculateFrecency(
-      matches[j],
-      time.Now(),
-    )
+    time := time.Now()
+    return matches[i].Frecency(time) < matches[j].Frecency(time)
   })
+
+  interactive, err := cmd.Flags().GetBool("interactive")
+
+  if err != nil {
+    die(err)
+  }
+
+  if !interactive {
+    openInEditor(editor, matches[0].Path)
+    return
+  }
 
   selected, err := fuzzySearch(matches)
 
@@ -288,6 +299,9 @@ func die(err error) {
 }
 
 func main() {
+  root.PersistentFlags().
+    Bool("interactive", false, "Search through matches interactively")
+
   if err := root.Execute(); err != nil {
     die(err)
   }
