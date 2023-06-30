@@ -16,6 +16,17 @@ ago it was last accessed.
 For more information about exactly how this works, check out
 [the algorithm](https://github.com/terror/e/blob/745b598e8ccbb5af654f695812750018252736c3/src/main.go#L38).
 
+### Installation
+
+You can download one of the pre-built binaries from the [releases](https://github.com/terror/e/releases)
+page or you can build from source:
+
+```bash
+git clone https://github.com/terror/e.git && cd e
+go build -o e ./src
+./e # Move this into your $PATH
+```
+
 ### Usage
 
 Interacting with `e` is as simple as passing it a file to access:
