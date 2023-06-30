@@ -1,0 +1,38 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  All:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup environment
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+
+      - name: Build Binary
+        run: go build -o e src/main.go
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            Binary Release for ${{ github.ref }}
+
+      - name: Upload Binary
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./e
+          asset_name: e
+          asset_content_type: application/octet-stream
