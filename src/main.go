@@ -6,7 +6,6 @@ import (
   "fmt"
   "github.com/ktr0731/go-fuzzyfinder"
   "github.com/spf13/cobra"
-  "log"
   "os"
   "os/exec"
   "os/user"
@@ -210,7 +209,7 @@ func isFile(path string) bool {
   return info.Mode().IsRegular()
 }
 
-func openInEditor(editor, path string) {
+func edit(editor, path string) {
   cmd := exec.Command(editor, path)
 
   cmd.Stdin = os.Stdin
@@ -220,7 +219,7 @@ func openInEditor(editor, path string) {
   err := cmd.Run()
 
   if err != nil {
-    log.Fatal(err)
+    die(err)
   }
 }
 
@@ -248,7 +247,7 @@ func run(cmd *cobra.Command, args []string) {
   }
 
   if isFile(fp) {
-    openInEditor(editor, fp)
+    edit(editor, fp)
     return
   }
 
@@ -259,12 +258,12 @@ func run(cmd *cobra.Command, args []string) {
   }
 
   if len(matches) == 0 {
-    openInEditor(editor, fp)
+    edit(editor, fp)
     return
   }
 
   if len(matches) == 1 {
-    openInEditor(editor, matches[0].Path)
+    edit(editor, matches[0].Path)
     return
   }
 
@@ -280,7 +279,7 @@ func run(cmd *cobra.Command, args []string) {
   }
 
   if !interactive {
-    openInEditor(editor, matches[0].Path)
+    edit(editor, matches[0].Path)
     return
   }
 
@@ -290,7 +289,7 @@ func run(cmd *cobra.Command, args []string) {
     die(err)
   }
 
-  openInEditor(editor, selected.Path)
+  edit(editor, selected.Path)
 }
 
 func die(err error) {
