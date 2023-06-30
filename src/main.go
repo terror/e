@@ -303,7 +303,7 @@ func run(cmd *cobra.Command, args []string) {
 }
 
 func die(err error) {
-  fmt.Printf("error: %s", err)
+  fmt.Printf("error: %s\n", err)
   os.Exit(1)
 }
 
