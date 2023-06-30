@@ -25,7 +25,6 @@ fmt:
 
 fmt-check:
 	gofmt -l .
-	@echo formatting check done
 
 forbid:
 	./bin/forbid
