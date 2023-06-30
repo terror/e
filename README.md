@@ -1,5 +1,7 @@
 ## e 🏃
 
+![CI](https://github.com/terror/e/actions/workflows/ci.yml/badge.svg)
+
 **e** is a tool let's you find and edit recently used files quickly.
 
 It works by maintaining an index of
