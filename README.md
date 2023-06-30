@@ -25,8 +25,9 @@ Usage:
   e [flags]
 
 Flags:
-  -h, --help          help for e
-      --interactive   Search through matches interactively
+      --editor string   Command to use for editing files
+  -h, --help            help for e
+      --interactive     Search through matches interactively
 ```
 
 Direct matches will get accessed immediately, otherwise you have a few options:

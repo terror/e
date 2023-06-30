@@ -226,6 +226,16 @@ func edit(editor, path string) {
 func run(cmd *cobra.Command, args []string) {
   editor := os.Getenv("EDITOR")
 
+  editorOverride, err := cmd.Flags().GetString("editor")
+
+  if err != nil {
+    die(err)
+  }
+
+  if editorOverride != "" {
+    editor = editorOverride
+  }
+
   if editor == "" {
     editor = "vim"
   }
@@ -300,6 +310,9 @@ func die(err error) {
 func main() {
   root.PersistentFlags().
     Bool("interactive", false, "Search through matches interactively")
+
+  root.PersistentFlags().
+    String("editor", "", "Command to use for editing files")
 
   if err := root.Execute(); err != nil {
     die(err)
