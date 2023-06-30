@@ -29,6 +29,10 @@ fmt-check:
 forbid:
 	./bin/forbid
 
+install *bin:
+  go build -o {{bin}} src/main.go
+  mv {{bin}} ~/.bin
+
 lint:
   golangci-lint run {{files}}
 
