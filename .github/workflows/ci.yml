@@ -28,7 +28,7 @@ jobs:
         run: gofmt -l .
 
       - name: Lint
-        run: golangci-lint run src/main.go
+        run: golangci-lint run ./src
 
       - name: Test
         run: go test -v ./src

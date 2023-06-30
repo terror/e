@@ -2,8 +2,6 @@ set dotenv-load
 
 export EDITOR := 'nvim'
 
-files := 'src/*'
-
 alias f := fmt
 alias r := run
 
@@ -13,14 +11,13 @@ default:
 all: test lint forbid fmt-check
 
 run *args:
-	#!/bin/bash
-	go run `fd .go ./src -E *_test.go` {{args}}
+	go run ./src
 
 test:
 	go test -v ./src
 
 fmt:
-	golines -m 80 -w {{files}}
+	golines -m 80 -w ./src
 	just retab
 
 fmt-check:
@@ -30,11 +27,11 @@ forbid:
 	./bin/forbid
 
 install *bin:
-  go build -o {{bin}} src/main.go
+  go build -o {{bin}} ./src
   mv {{bin}} ~/.bin
 
 lint:
-  golangci-lint run {{files}}
+  golangci-lint run ./src
 
 retab:
 	./bin/retab
