@@ -2,33 +2,33 @@ name: CI
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ['master']
   pull_request:
-    branches: [ "master" ]
+    branches: ['master']
 
 jobs:
   All:
     runs-on: macos-latest
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Setup environment
-      uses: actions/setup-go@v3
-      with:
-        go-version: 1.19
+      - name: Setup environment
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
 
-    - name: Install dependencies
-      run: brew install ripgrep golangci-lint golines
+      - name: Install dependencies
+        run: brew install ripgrep golangci-lint golines
 
-    - name: Forbid
-      run: ./bin/forbid
+      - name: Forbid
+        run: ./bin/forbid
 
-    - name: Format
-      run: gofmt -l .
+      - name: Format
+        run: gofmt -l .
 
-    - name: Lint
-      run: golangci-lint run src/main.go
+      - name: Lint
+        run: golangci-lint run src/main.go
 
-    - name: Test
-      run: go test -v ./src
+      - name: Test
+        run: go test -v ./src
