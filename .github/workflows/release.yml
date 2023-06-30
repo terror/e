@@ -3,53 +3,30 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
-  workflow_dispatch:
+      - '*'
+
+permissions:
+  contents: write
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Setup environment
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.19
-
-      - name: Build binary
-        run: go build -o e ./src
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: e-${{ matrix.os }}
-          path: ./e
-
-  publish:
-    needs: build
+  All:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
-
-      - name: Create release
-        id: create_release
-        uses: softprops/action-gh-release@v1
+      - uses: actions/checkout@v3
         with:
-          files: ./*.zip
-          tag_name: ${{ github.ref }}
-          name: Release ${{ github.ref }}
-          body: |
-            Binary releases for ${{ github.ref }}
+          fetch-depth: 0
+
+      - run: git fetch --force --tags
+
+      - uses: actions/setup-go@v4
+        with:
+          go-version: stable
+
+      - uses: goreleaser/goreleaser-action@v4
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
