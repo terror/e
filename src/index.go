@@ -15,6 +15,37 @@ func NewIndex(path string) Index {
   return Index{path: path}
 }
 
+func (i *Index) Search(name string) ([]Entry, error) {
+  entries, err := i.read()
+
+  if err != nil {
+    return nil, err
+  }
+
+  var wg sync.WaitGroup
+
+  matches := make([]Entry, 0, len(entries))
+
+  matchesMutex := &sync.Mutex{}
+
+  for _, entry := range entries {
+    wg.Add(1)
+
+    go func(e Entry) {
+      defer wg.Done()
+      if filepath.Base(e.Path) == name && state(e.Path) != Unknown {
+        matchesMutex.Lock()
+        matches = append(matches, e)
+        matchesMutex.Unlock()
+      }
+    }(entry)
+  }
+
+  wg.Wait()
+
+  return matches, nil
+}
+
 func (i *Index) Update(entry Entry) error {
   entries, err := i.read()
 
@@ -41,36 +72,6 @@ func (i *Index) Update(entry Entry) error {
   }
 
   return nil
-}
-
-func (i *Index) Search(name string) ([]Entry, error) {
-  entries, err := i.read()
-
-  if err != nil {
-    return nil, err
-  }
-
-  var wg sync.WaitGroup
-
-  matches := make([]Entry, 0, len(entries))
-
-  matchesMutex := &sync.Mutex{}
-
-  for _, entry := range entries {
-    wg.Add(1)
-    go func(e Entry) {
-      defer wg.Done()
-      if filepath.Base(e.Path) == name && isFile(e.Path) {
-        matchesMutex.Lock()
-        matches = append(matches, e)
-        matchesMutex.Unlock()
-      }
-    }(entry)
-  }
-
-  wg.Wait()
-
-  return matches, nil
 }
 
 func (i *Index) read() ([]Entry, error) {

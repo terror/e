@@ -43,14 +43,22 @@ func expand(path string) string {
   }
 }
 
-func isFile(path string) bool {
+func state(path string) int {
   info, err := os.Stat(path)
 
   if err != nil {
-    return false
+    return Unknown
   }
 
-  return info.Mode().IsRegular()
+  if info.Mode().IsRegular() {
+    return File
+  }
+
+  if info.Mode().IsDir() {
+    return Directory
+  }
+
+  return Unknown
 }
 
 func search(matches []Entry) (Entry, error) {

@@ -11,7 +11,7 @@ default:
 all: test lint forbid fmt-check
 
 run *args:
-	go run ./src
+	go run ./src {{args}}
 
 test:
 	go test -v ./src

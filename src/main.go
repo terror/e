@@ -48,7 +48,7 @@ func run(cmd *cobra.Command, args []string) {
     die(err)
   }
 
-  if isFile(fp) {
+  if state(fp) != Unknown {
     edit(editor, fp)
     return
   }
